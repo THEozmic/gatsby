@@ -77,7 +77,7 @@ const copy = async (starterPath: string, rootPath: string) => {
 }
 
 // Clones starter from URI.
-const clone = async (hostInfo: any, rootPath: string) => {
+const clone = async (hostInfo: any, rootPath: string, usePnp: boolean) => {
   let url
   // Let people use private repos accessed over SSH.
   if (hostInfo.getDefaultRepresentation() === `sshurl`) {
@@ -97,7 +97,9 @@ const clone = async (hostInfo: any, rootPath: string) => {
 
   await fs.remove(sysPath.join(rootPath, `.git`))
 
-  await install(rootPath)
+  report.info(`Using PnP: ${usePnp}`)
+
+  !usePnp && (await install(rootPath))
 }
 
 type InitOptions = {
@@ -109,6 +111,7 @@ type InitOptions = {
  */
 module.exports = async (starter: string, options: InitOptions = {}) => {
   const rootPath = options.rootPath || process.cwd()
+  const usePnp = options.usePnp
 
   const urlObject = url.parse(rootPath)
   if (urlObject.protocol && urlObject.host) {
@@ -124,6 +127,7 @@ module.exports = async (starter: string, options: InitOptions = {}) => {
   }
 
   const hostedInfo = hostedGitInfo.fromUrl(starter)
-  if (hostedInfo) await clone(hostedInfo, rootPath)
+  if (hostedInfo) await clone(hostedInfo, rootPath, usePnp)
   else await copy(starter, rootPath)
+  console.timeEnd(`Setup time`)
 }
